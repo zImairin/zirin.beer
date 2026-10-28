@@ -13,6 +13,8 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 			adapter: adapter()
-		})
-	]
+		})],
+		ssr: {
+			noExternal:["three"]
+		}
 });
