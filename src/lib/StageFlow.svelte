@@ -98,6 +98,41 @@
 		}
 	];
 
+	const shawarmaArrows = [
+		{ x: 2, y: 8, angle: 41, size: 112, delay: -180 },
+		{ x: 13, y: 3, angle: 52, size: 72, delay: -460 },
+		{ x: 28, y: 9, angle: 62, size: 96, delay: -80 },
+		{ x: 43, y: 3, angle: 82, size: 62, delay: -320 },
+		{ x: 59, y: 5, angle: 101, size: 106, delay: -540 },
+		{ x: 76, y: 4, angle: 120, size: 78, delay: -220 },
+		{ x: 91, y: 9, angle: 135, size: 118, delay: -400 },
+		{ x: 98, y: 22, angle: 150, size: 68, delay: -140 },
+		{ x: 3, y: 33, angle: 20, size: 84, delay: -500 },
+		{ x: 17, y: 23, angle: 39, size: 110, delay: -260 },
+		{ x: 29, y: 31, angle: 42, size: 60, delay: -40 },
+		{ x: 36, y: 19, angle: 66, size: 92, delay: -340 },
+		{ x: 64, y: 16, angle: 112, size: 74, delay: -100 },
+		{ x: 80, y: 24, angle: 139, size: 102, delay: -480 },
+		{ x: 96, y: 43, angle: 171, size: 64, delay: -200 },
+		{ x: 2, y: 58, angle: -10, size: 116, delay: -420 },
+		{ x: 98, y: 62, angle: -166, size: 88, delay: -60 },
+		{ x: 5, y: 76, angle: -30, size: 70, delay: -300 },
+		{ x: 17, y: 68, angle: -29, size: 100, delay: -520 },
+		{ x: 89, y: 56, angle: -171, size: 80, delay: -160 },
+		{ x: 84, y: 76, angle: -143, size: 108, delay: -380 },
+		{ x: 96, y: 82, angle: -145, size: 58, delay: -120 },
+		{ x: 7, y: 94, angle: -46, size: 104, delay: -440 },
+		{ x: 22, y: 96, angle: -59, size: 76, delay: -240 },
+		{ x: 37, y: 92, angle: -73, size: 114, delay: -20 },
+		{ x: 51, y: 98, angle: -91, size: 66, delay: -360 },
+		{ x: 66, y: 94, angle: -110, size: 94, delay: -560 },
+		{ x: 81, y: 96, angle: -124, size: 82, delay: -280 },
+		{ x: 96, y: 94, angle: -136, size: 120, delay: -40 },
+		{ x: 11, y: 47, angle: 4, size: 90, delay: -320 },
+		{ x: 13, y: 82, angle: -38, size: 62, delay: -180 },
+		{ x: 72, y: 84, angle: -123, size: 98, delay: -500 }
+	];
+
 	const directions = [
 		{ dx: 0, dy: -1, wall: 0, opposite: 2 },
 		{ dx: 1, dy: 0, wall: 1, opposite: 3 },
@@ -654,6 +689,15 @@
 			<div class="fake-page-lines"><i></i><i></i><i></i><i></i><i></i><i></i></div>
 			<div class="fake-pixel-art"><span>WWW</span><b>!!!</b></div>
 		</div>
+		<div class="shawarma-callout" aria-hidden="true">
+			{#each shawarmaArrows as arrow, index (index)}
+				<span
+					class="shawarma-arrow"
+					style={`--arrow-left:${arrow.x}%;--arrow-top:${arrow.y}%;--arrow-angle:${arrow.angle}deg;--arrow-size:${arrow.size}px;--arrow-delay:${arrow.delay}ms;`}
+				>➜</span>
+			{/each}
+		</div>
+		<a class="shawarma-button" href={resolve('/shawarma')}>ШАВЕРНИСЬ</a>
 		{#each ads.slice(0, visibleAds) as ad, index (ad.brandName + index)}
 			{#if !closedAds.includes(index)}
 				<article class={`ad-window ${ad.className} ad-position-${index}`} style={`--window-order:${index};`}>
@@ -698,7 +742,6 @@
 				>×</button>
 			{/if}
 		{/each}
-		<div class="ad-desktop-footer"><a href={resolve('/shawarma')}>sosite: ещё один сайт, который не спросил</a><span>Вы всё ещё смотрите? Как интересно.</span></div>
 	</main>
 	{#if exitWindowVisible && !exitWindowClosed}
 		<div class="exit-shade" aria-hidden="true"></div>
@@ -761,6 +804,10 @@
 	.fake-page-lines i:nth-child(3n) { width: 90%; }
 	.fake-pixel-art { position: absolute; right: 10%; bottom: 8%; display: flex; width: 180px; height: 110px; align-items: center; justify-content: center; border: 6px ridge #a38b61; background: #d4a339; color: #8d1b1b; font: bold 28px 'Courier New', monospace; transform: rotate(2deg); }
 	.fake-pixel-art b { position: absolute; right: 8px; bottom: 2px; color: #f6f0ce; font-size: 40px; }
+	.shawarma-callout { position: fixed; z-index: 24; inset: 0; overflow: hidden; pointer-events: none; }
+	.shawarma-button { position: fixed; z-index: 25; top: 50%; left: 50%; display: grid; width: min(260px, calc(100vw - 72px)); min-height: 72px; place-items: center; padding: 10px 14px; border: 6px ridge #fff36b; background: #ed1b24; color: #fff36b; box-shadow: 6px 7px 0 #111; font: bold 25px 'Courier New', monospace; text-align: center; text-decoration: none; text-shadow: 2px 2px #111; transform: translate(-50%, -50%); animation: shawarma-flash 620ms steps(2, end) infinite; }
+	.shawarma-button:hover { background: #fff36b; color: #e80016; }
+	.shawarma-arrow { position: absolute; left: var(--arrow-left); top: var(--arrow-top); color: #fff36b; font: bold min(var(--arrow-size), 120px)/0.8 Arial, sans-serif; text-shadow: 4px 4px #c00000, -2px -2px #111; rotate: var(--arrow-angle); transform-origin: 50% 50%; animation: arrow-nag 470ms steps(2, end) infinite alternate; animation-delay: var(--arrow-delay); }
 	.ad-window { position: fixed; z-index: calc(40 + var(--window-order)); width: min(330px, 86vw); min-height: 230px; padding: 4px; border: 4px double #a99b83; background: #050505; color: #f2eee8; box-shadow: 5px 6px 0 #0b0806; font-family: 'Courier New', monospace; animation: pop-window 180ms steps(2, end); }
 	.ad-position-0 { top: 6%; left: 4%; }
 	.ad-position-1 { top: 18%; left: 34%; }
@@ -792,8 +839,6 @@
 	.download-button { display: flex; min-height: 32px; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 8px; border: 3px outset #b6ab94; background: #8c1b1a; color: #fff8dc; font: bold 9px 'Courier New', monospace; text-align: center; text-decoration: none; }
 	.download-button span { font-size: 16px; }
 	.max .download-button, .ad-window.max .download-button { background: #6824a9; }
-	.ad-desktop-footer { position: fixed; right: 8px; bottom: 6px; left: 8px; z-index: 70; display: flex; justify-content: space-between; gap: 12px; color: #f3e5ce; font: 10px 'Courier New', monospace; text-shadow: 1px 1px #000; }
-	.ad-desktop-footer a { color: #fff36b; }
 	.exit-shade { position: fixed; z-index: 78; inset: 0; background: rgb(0 0 0 / 35%); }
 	.exit-window { position: fixed; z-index: 80; top: 50%; left: 50%; width: min(390px, calc(100vw - 30px)); padding: 4px; border: 5px double #b1a38b; background: #090909; color: #fff; box-shadow: 9px 10px 0 #000; transform: translate(-50%, -50%); animation: pop-window 200ms steps(2, end); }
 	.exit-titlebar { position: relative; display: flex; height: 28px; align-items: center; gap: 7px; padding: 0 38px 0 7px; border-bottom: 2px solid #9f8a6c; background: #18130e; color: #fff; font: bold 10px 'Courier New', monospace; }
@@ -818,6 +863,8 @@
 		72% { transform: translateX(-8px) rotate(310deg); }
 		to { top: var(--close-top); transform: translateX(0) rotate(430deg); }
 	}
+	@keyframes shawarma-flash { 50% { background: #fff36b; color: #e80016; } }
+	@keyframes arrow-nag { from { scale: 1; } to { scale: 1.24; } }
 	@media (max-width: 650px) {
 		.ad-position-0 { top: 5%; left: 2%; }
 		.ad-position-1 { top: 24%; left: 11%; }
@@ -828,6 +875,8 @@
 		.ad-position-6 { top: 68%; left: 5%; }
 		.ad-position-7 { top: 25%; left: 20%; }
 		.ad-window { width: min(290px, 82vw); min-height: 205px; }
+		.shawarma-button { width: min(240px, calc(100vw - 64px)); min-height: 64px; font-size: 21px; }
+		.shawarma-arrow { font-size: min(var(--arrow-size), 72px); }
 		.ad-window-body { min-height: 130px; gap: 8px; padding-inline: 6px; }
 		.brand-tile { width: 66px; height: 81px; }
 		.brand-tile > span { width: 45px; font-size: 30px; }
@@ -836,7 +885,6 @@
 		.ad-copy p { font-size: 10px; }
 		.ad-close-flyout { width: 26px; height: 24px; }
 		.download-button { font-size: 8px; }
-		.ad-desktop-footer { flex-direction: column; gap: 3px; font-size: 8px; }
 		.exit-window-body h2 { font-size: 17px; }
 		.exit-fire { width: 60px; font-size: 42px; }
 	}
