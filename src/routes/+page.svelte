@@ -11,6 +11,15 @@
 	type Maze = { cells: MazeCell[]; columns: number; rows: number };
 	type Cursor = { x: number; y: number; vx: number; vy: number };
 	type Screen = 'cursors' | 'maze' | 'ads';
+	type AdCloseState = {
+		moves: number;
+		escaped: boolean;
+		settled: boolean;
+		falling: boolean;
+		x: number;
+		y: number;
+		startY: number;
+	};
 
 	const ads = [
 		{
@@ -96,7 +105,16 @@
 
 	let screen = $state<Screen>('cursors');
 	let visibleAds = $state(0);
-	let adsClosed = $state(false);
+	let closedAds = $state<number[]>([]);
+	let adCloseStates = $state<AdCloseState[]>(ads.map(() => ({
+		moves: 0,
+		escaped: false,
+		settled: false,
+		falling: false,
+		x: 0,
+		y: 0,
+		startY: 0
+	})));
 	let exitWindowVisible = $state(false);
 	let exitWindowClosed = $state(false);
 	let closeMoves = $state(0);
@@ -495,7 +513,16 @@
 		window.clearTimeout(mazeTimer);
 		screen = 'ads';
 		visibleAds = 0;
-		adsClosed = false;
+		closedAds = [];
+		adCloseStates = ads.map(() => ({
+			moves: 0,
+			escaped: false,
+			settled: false,
+			falling: false,
+			x: 0,
+			y: 0,
+			startY: 0
+		}));
 		exitWindowClosed = false;
 		exitWindowVisible = false;
 		adTimers = ads.map((_, index) =>
@@ -506,6 +533,51 @@
 				}
 			}, 700 + index * 760)
 		);
+	}
+
+	function handleAdCloseHover(index: number, event: PointerEvent) {
+		if (event.pointerType !== 'mouse') return;
+		const current = adCloseStates[index];
+		if (!current || current.settled) return;
+		const button = event.currentTarget as HTMLButtonElement;
+		const bounds = button.getBoundingClientRect();
+
+		if (index % 3 === 1 && !current.escaped) {
+			adCloseStates[index] = {
+				...current,
+				moves: 1,
+				escaped: true,
+				settled: true,
+				falling: true,
+				x: Math.max(8, Math.min(bounds.left, window.innerWidth - 34)),
+				y: Math.max(8, window.innerHeight - 34),
+				startY: bounds.top
+			};
+			return;
+		}
+
+		const moves = current.moves + 1;
+		const maxX = Math.max(12, window.innerWidth - 36);
+		const maxY = Math.max(58, window.innerHeight - 36);
+		let x = bounds.left;
+		let y = bounds.top;
+		for (let attempt = 0; attempt < 8; attempt += 1) {
+			x = 12 + Math.random() * Math.max(1, maxX - 12);
+			y = 58 + Math.random() * Math.max(1, maxY - 58);
+			if (Math.hypot(x - event.clientX, y - event.clientY) > 150) break;
+		}
+		adCloseStates[index] = { ...current, moves, escaped: true, settled: moves >= 3, x, y, startY: 0 };
+	}
+
+	function handleAdCloseClick(index: number, event: MouseEvent) {
+		if (event.detail !== 0 && !adCloseStates[index]?.settled) return;
+		closedAds = [...closedAds, index];
+	}
+
+	function handleAdClosePointerDown(index: number, event: PointerEvent) {
+		if (event.pointerType === 'mouse') return;
+		event.preventDefault();
+		closedAds = [...closedAds, index];
 	}
 
 	function moveCloseButton() {
@@ -528,8 +600,6 @@
 			window.clearTimeout(exitTimer);
 			exitWindowVisible = false;
 			exitWindowClosed = true;
-			adsClosed = true;
-			visibleAds = 0;
 		}
 		else moveCloseButton();
 	}
@@ -584,18 +654,49 @@
 			<div class="fake-page-lines"><i></i><i></i><i></i><i></i><i></i><i></i></div>
 			<div class="fake-pixel-art"><span>WWW</span><b>!!!</b></div>
 		</div>
-		{#if !adsClosed}
-			{#each ads.slice(0, visibleAds) as ad, index (ad.brandName + index)}
+		{#each ads.slice(0, visibleAds) as ad, index (ad.brandName + index)}
+			{#if !closedAds.includes(index)}
 				<article class={`ad-window ${ad.className} ad-position-${index}`} style={`--window-order:${index};`}>
-					<div class="ad-window-bar"><span class="ad-window-icon">▣</span><span>{ad.brandName}</span><span class="window-controls"><i>_</i><i>□</i><i>×</i></span></div>
+					<div class="ad-window-bar">
+						<span class="ad-window-icon">▣</span>
+						<span>{ad.brandName}</span>
+						<span class="window-controls">
+							<i>_</i><i>□</i>
+							{#if !adCloseStates[index].escaped}
+								<button
+									class="ad-window-close"
+									type="button"
+									aria-label={`Закрыть ${ad.brandName}`}
+									title="Закрыть окно"
+									onpointerdown={(event) => handleAdClosePointerDown(index, event)}
+									onpointerenter={(event) => handleAdCloseHover(index, event)}
+									onclick={(event) => handleAdCloseClick(index, event)}
+								>×</button>
+							{/if}
+						</span>
+					</div>
 					<div class="ad-window-body">
 						<div class={`brand-tile ${ad.className}`}><span>{ad.brand}</span><small>{ad.className === 'yandex' ? 'БРАУЗЕР' : 'МЕССЕНДЖЕР'}</small></div>
 						<div class="ad-copy"><h1>{ad.title}</h1><p>{ad.copy}</p></div>
 					</div>
 					<a class="download-button" href={ad.url} target="_blank" rel="noreferrer">{ad.action} <span>»</span></a>
 				</article>
-			{/each}
-		{/if}
+			{/if}
+		{/each}
+		{#each ads.slice(0, visibleAds) as ad, index (ad.brandName + index)}
+			{#if !closedAds.includes(index) && adCloseStates[index].escaped}
+				<button
+					class={`ad-close-flyout${adCloseStates[index].falling ? ' falling' : ''}`}
+					style={`--close-left:${adCloseStates[index].x}px;--close-top:${adCloseStates[index].y}px;--fall-start-y:${adCloseStates[index].startY}px;`}
+					type="button"
+					aria-label={`Закрыть ${ad.brandName}`}
+					title="Закрыть окно"
+					onpointerdown={(event) => handleAdClosePointerDown(index, event)}
+					onpointerenter={(event) => handleAdCloseHover(index, event)}
+					onclick={(event) => handleAdCloseClick(index, event)}
+				>×</button>
+			{/if}
+		{/each}
 		<div class="ad-desktop-footer"><a href={resolve('/shawarma')}>sosite: ещё один сайт, который не спросил</a><span>Вы всё ещё смотрите? Как интересно.</span></div>
 	</main>
 	{#if exitWindowVisible && !exitWindowClosed}
@@ -631,7 +732,7 @@
 			>×</button>
 		{/if}
 	{/if}
-	{#if exitWindowClosed}
+	{#if exitWindowClosed && visibleAds === ads.length && closedAds.length === ads.length}
 		<div class="closed-note" role="status"><span>ВСЁ ЗАКРЫТО.</span><a href={resolve('/shawarma')}>ОТКРЫТЬ ШАУРМУ ↗</a></div>
 	{/if}
 {/if}
@@ -679,7 +780,13 @@
 	.ad-window-bar { display: flex; height: 23px; align-items: center; gap: 6px; padding: 0 5px; border-bottom: 2px solid #8b7d6b; background: #17130f; color: #f6eedf; font-size: 8px; font-weight: bold; }
 	.ad-window-icon { color: #ffc626; }
 	.window-controls { display: flex; gap: 2px; margin-left: auto; }
-	.window-controls i { display: grid; width: 16px; height: 15px; place-items: center; border: 1px solid #a99b83; color: #fff; font: normal 11px Arial, sans-serif; }
+	.window-controls i, .window-controls button { display: grid; width: 16px; height: 15px; place-items: center; border: 1px solid #a99b83; color: #fff; font: normal 11px Arial, sans-serif; }
+	.window-controls i { font-style: normal; }
+	.window-controls button { padding: 0; background: #17130f; cursor: pointer; }
+	.window-controls button:hover { border-color: #fff; background: #a51c1c; }
+	.ad-close-flyout { position: fixed; z-index: 76; top: var(--close-top); left: var(--close-left); display: grid; width: 27px; height: 25px; place-items: center; padding: 0; border: 2px outset #f4ead8; background: #130f0b; color: #fff; box-shadow: 3px 3px #000; font: 15px Arial, sans-serif; cursor: pointer; }
+	.ad-close-flyout:not(.falling) { animation: ad-close-pop 150ms steps(2, end); }
+	.ad-close-flyout.falling { animation: ad-close-fall 680ms cubic-bezier(0.45, 0.04, 0.82, 0.55) both; }
 	.ad-window-body { display: flex; min-height: 152px; align-items: center; gap: 12px; padding: 12px 10px 8px; background: #070707; }
 	.brand-tile { display: flex; width: 84px; height: 95px; flex: 0 0 auto; flex-direction: column; align-items: center; justify-content: center; border: 4px outset #dbcaa6; background: #a96f17; color: white; image-rendering: pixelated; }
 	.brand-tile > span { display: grid; width: 55px; aspect-ratio: 1; place-items: center; background: #ed281e; color: #fff; font: bold 36px Arial, sans-serif; }
@@ -711,6 +818,13 @@
 	.closed-note a { color: #fff36b; white-space: nowrap; }
 	:global(button:focus-visible), :global(a:focus-visible) { outline: 3px solid #ec2ec8; outline-offset: 3px; }
 	@keyframes pop-window { from { scale: 0.94; opacity: 0; } to { scale: 1; opacity: 1; } }
+	@keyframes ad-close-pop { from { scale: 0.55; rotate: -18deg; } to { scale: 1; rotate: 0deg; } }
+	@keyframes ad-close-fall {
+		from { top: var(--fall-start-y); transform: rotate(0deg); }
+		38% { transform: translateX(12px) rotate(150deg); }
+		72% { transform: translateX(-8px) rotate(310deg); }
+		to { top: var(--close-top); transform: translateX(0) rotate(430deg); }
+	}
 	@media (max-width: 650px) {
 		.ad-position-0 { top: 5%; left: 2%; }
 		.ad-position-1 { top: 24%; left: 11%; }
@@ -727,6 +841,7 @@
 		.brand-tile.max > span { font-size: 24px; }
 		.ad-copy h1 { font-size: 16px; }
 		.ad-copy p { font-size: 10px; }
+		.ad-close-flyout { width: 26px; height: 24px; }
 		.download-button { font-size: 8px; }
 		.ad-desktop-footer { flex-direction: column; gap: 3px; font-size: 8px; }
 		.exit-window-body h2 { font-size: 17px; }
