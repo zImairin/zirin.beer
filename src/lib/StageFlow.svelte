@@ -46,7 +46,7 @@
 			brand: 'Я',
 			brandName: 'ЯНДЕКС БРАУЗЕР',
 			title: 'ЭТО ОКНО НЕ ЗАКРЫТЬ',
-			copy: 'Пока не установишь Яндекс Браузер. Это быстро. Наверное.',
+			copy: 'Пока не установишь Яндекс Браузер. Это быстро.',
 			action: 'УСТАНОВИТЬ СЕЙЧАС',
 			url: 'https://browser.yandex.ru/',
 			className: 'yandex'
@@ -660,7 +660,7 @@
 </script>
 
 <svelte:head>
-	<title>{stage === 'cursors' ? 'sosite — нажми сюда' : stage === 'maze' ? 'sosite — проверка' : 'sosite — предложение'}</title>
+	<title>{stage === 'cursors' ? 'CLICK ME!' : stage === 'maze' ? 'LABIRINT' : 'YAMAX'}</title>
 	<meta name="description" content="Нажми сюда. Что может пойти не так?" />
 </svelte:head>
 

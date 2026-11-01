@@ -4,7 +4,7 @@
 </script>
 
 <svelte:head>
-	<title>Шаурма 3D</title>
+	<title>Шаурма</title>
 </svelte:head>
 
 <main>
